@@ -1,0 +1,29 @@
+{
+  "name": "fuelband-connect",
+  "version": "1.0.0",
+  "description": "Fuelband configuation and sync app",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/C4/Fuelband-Connect.git"
+  },
+  "keywords": [
+    "Fuelband"
+  ],
+  "author": "Liteturn",
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/C4/Fuelband-Connect/issues"
+  },
+  "homepage": "https://github.com/C4/Fuelband-Connect#readme",
+  "devDependencies": {
+    "electron": "^29.1.4"
+  },
+  "dependencies": {
+    "node-hid": "^3.0.0"
+  }
+}

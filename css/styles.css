@@ -1,0 +1,36 @@
+/* styles.css */
+
+/* Add styles here to customize the appearance of your app */
+@font-face {
+  font-family: 'Poppins';
+  src: url("../fonts/Poppins/Poppins-Regular.ttf") format("truetype");
+}
+
+
+html,
+body {
+  margin: 0;
+  overflow: hidden;
+
+  /* Prevent white flash when running application */
+  background-color: #ffffff;
+
+  /* Prevent WebView bounce effect in OS X */
+  height: 100%;
+  width: 100%;
+  color: #272727;
+  font-size: 10px;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Styling for the overlay
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); 
+  z-index: 1050; 
+}
+*/

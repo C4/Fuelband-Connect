@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+    <link href="./css/bootstrap.5.0.2.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link href="./css/styles.css" rel="stylesheet"> 
+    <title>Fuelband Connect</title>
+  </head>
+  <body>
+
+    <div class="container">
+        <div class="row g-3">
+            <div class="text-center">
+                <h1 style="font-family: 'Poppins', sans-serif; font-weight: 700; font-style: italic;" class="display-1">Fuelband Connect</h1>
+             <img src="./images/fb-hero.jpg" style="height: 100px;" class="rounded mx-auto d-block" id="hero-image" alt="Fuelband">
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-6">
+                <div class="input-group mb-3">
+                    <button type="button" class="btn btn-primary" id="connectBtn">Read Fuelband</button>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="input-group mb-3">
+                    <button type="button" class="btn btn-danger" id="resetDeviceBtn" data-bs-toggle="modal" data-bs-target="#confirmResetModal">Factory Reset Fuelband</button>
+                </div>
+            </div>
+         </div>
+         <div class="input-group mb-3">
+            <span class="input-group-text" id="">Test Value</span>
+            <input type="text" class="form-control" placeholder="Testing" id="testValue" aria-label="testValue" aria-describedby="basic-addon1">
+            <button class="btn btn-outline-secondary" type="button" id="setTestValue">Set Value</button>
+        </div>
+        <div class="row g-3">
+            <div class="col">
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="">Deivce Model</span>
+                    <input type="text" class="form-control" placeholder="Model" id="modelNumber" aria-label="modelNumber" aria-describedby="basic-addon1" disabled>
+                </div>
+            </div>
+            <div class="col">
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="">Serial Number</span>
+                    <input type="text" class="form-control" placeholder="Serial Number" id="serialNumber" aria-label="serialNumber" aria-describedby="basic-addon1" disabled>
+            
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group mb-3">
+            <span class="input-group-text" id="">Band Orientation (Hand)</span>
+            <select class="form-select" id="bandOrientation" aria-label="bandOrientation">
+            </select>
+            <button class="btn btn-outline-secondary" type="button" id="setBandOrientation">Set Value</button>
+        </div>
+        <div class="input-group mb-3">
+            <span class="input-group-text" id="">First Name</span>
+            <input type="text" class="form-control" placeholder="First Name" id="firstName" aria-label="firstName" aria-describedby="basic-addon1">
+            <button class="btn btn-outline-secondary" type="button" id="setFirstName">Set Value</button>
+        </div>
+        <div class="input-group mb-3">
+            <span class="input-group-text" id="">Height (in)</span>
+            <input type="text" class="form-control" placeholder="Height" id="height" aria-label="height" aria-describedby="basic-addon1">
+            <button class="btn btn-outline-secondary" type="button" id="setHeight">Set Value</button>
+        </div>
+        <div class="input-group mb-3">
+            <span class="input-group-text" id="">Weight (lbs)</span>
+            <input type="text" class="form-control" placeholder="Weight" id="weight" aria-label="weight" aria-describedby="basic-addon1">
+            <button class="btn btn-outline-secondary" type="button" id="setWeight">Set Value</button>
+        </div>
+        <div class="input-group mb-3">
+            <span class="input-group-text" id="">Gender</span>
+            <select class="form-select" id="gender" aria-label="gender">
+            </select>
+            <button class="btn btn-outline-secondary" type="button" id="setGender">Set Value</button>
+        </div>
+        <div class="input-group mb-3">
+            <span class="input-group-text" id="">Lifetime Fuel</span>
+            <input type="text" class="form-control" placeholder="Lifetime Fuel" id="lifetimeFuel" aria-label="lifetimeFuel" aria-describedby="basic-addon1">
+        </div>
+      </div>
+
+    <!-- Modal -->
+    <!--<div class="modal-overlay">    </div>  Add overlay here -->
+    <div class="modal fade" id="confirmResetModal" tabindex="-1" role="dialog" aria-labelledby="confirmResetModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="confirmResetModalLabel">Confirm Reset</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+            Are you sure you want to factory reset the device?
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="resetConfirmedButton">Reset</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+
+    <!-- You can also require other files to run in this process -->
+    <script src="./renderer.js"></script>
+  </body>
+</html>
