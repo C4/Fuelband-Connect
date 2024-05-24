@@ -47,7 +47,7 @@ const SETTING_GOAL_6 = 46;
 const SETTING_FUEL = 48;
 const SETTING_MENU_CALORIES = 57;
 const SETTING_MENU_STEPS = 58;
-const SETTING_GOAL_CELECRATIONS = 59;
+const SETTING_GOAL_CELEBRATIONS = 59;
 const SETTING_WEIGHT = 61;
 const SETTING_HEIGHT = 62;
 const SETTING_DATE_OF_BIRTH = 63;
@@ -57,13 +57,13 @@ const SETTING_MENU_STARS = 89; // hours won
 const SETTING_LIFETIME_FUEL = 94;
 const SETTING_FIRST_NAME = 97;
 
-const SETTING_TEST = 59;
+const SETTING_TEST = 0;
 
 function createWindow () {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 800,
-    height: 500,
+    height: 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     },
@@ -196,6 +196,30 @@ function intFromLittleEndian(buf) {
     return t_num;
 }
 
+function stringToLittleEndianByteArray(numberString) {
+    // Parse the string to an integer
+    const number = parseInt(numberString, 10);
+    // Create a buffer to hold the 4 bytes
+    const buffer = Buffer.alloc(4);
+    // Write the number to the buffer in little-endian format
+    buffer.writeUInt32LE(number);
+    // Convert the buffer to a byte array
+    const byteArray = Array.from(buffer);
+    return byteArray;
+}
+
+function decimalsToHex(decimalArray) {
+    return decimalArray.map(num => {
+        // Convert the number to a hex string
+        let hexString = num.toString(16).toUpperCase();
+        // Ensure the hex string is 2 characters long
+        if (hexString.length === 1) {
+            hexString = '0' + hexString;
+        }
+        return hexString;
+    });
+}
+
 const deviceInfo = {
 
 };
@@ -203,9 +227,16 @@ const deviceInfo = {
 
 //These are the get functions for interfacing with the Fuelband
 function getModelNumber(device){
-    const featureDataToSend = [FEATURE_REPORT, 0x02, 0xFF, OPCODE_VERSION];
+    //const featureDataToSend = [FEATURE_REPORT, 0x02, 0xFF, OPCODE_VERSION];
+
+    //Replicating from the pcap
+    const featureDataToSend = [0x09, 0x09, 0x02, 0x00];
+    console.log("Model num request:",featureDataToSend);
+    console.log("Model num request (hex):",decimalsToHex(featureDataToSend));
     device.sendFeatureReport(featureDataToSend);
     const receivedData = device.getFeatureReport(FEATURE_REPORT,64);
+    console.log("Model num response:",receivedData);
+    console.log("Model num response (hex):",decimalsToHex(receivedData));
     return toAscii(receivedData.slice(18));
 }
 
@@ -213,6 +244,7 @@ function getSerialNumber(device){
     const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_GET, 1,SETTING_SERIAL_NUMBER];
     device.sendFeatureReport(featureDataToSend);
     const receivedData = device.getFeatureReport(FEATURE_REPORT,64);
+    console.log("serial num response:",receivedData);
     return toAscii(receivedData.slice(7));
 }
 
@@ -346,24 +378,127 @@ function doFactoryReset(device){
     return;
 }
 
-function getLifetimeFuel(device){
-    const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_GET, 1,SETTING_LIFETIME_FUEL];
+function getFuelGoal(device){
+    const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_GET, 1,SETTING_GOAL_0];
+    // Just getting the first day value here instead of trying to figure out day +1. On the setting side I'll set them all the same for now. 
     device.sendFeatureReport(featureDataToSend);
     const receivedData = device.getFeatureReport(FEATURE_REPORT,64);
-    return intFromLittleEndian(receivedData.slice(3));
+    buf = receivedData.slice(-4); // Grab the last 4 digits in the response buffer
+    return intFromLittleEndian(buf);
+}
+function setFuelGoal(device, goal){
+    if (!goal || goal.trim() === "") {
+        console.error("Goal cannot be empty");
+        return;
+    } else{
+        fuelGoal = stringToLittleEndianByteArray(goal);
+        // Will write this to all of the days of the week. Setting codes are 40-46. 
+        for (let i = 40; i <= 46; i++) {
+            const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, i,fuelGoal.length,...fuelGoal];
+            console.log(featureDataToSend);
+            device.sendFeatureReport(featureDataToSend);
+            const receivedData = device.getFeatureReport(FEATURE_REPORT,64);
+        }
+    return;
+    }
 }
 
+/*
 function getTestValue(device){
-    const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_GET, 1,SETTING_TEST];
+    const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_GET, 1,2];
     device.sendFeatureReport(featureDataToSend);
     const receivedData = device.getFeatureReport(FEATURE_REPORT,64);
-    console.log(receivedData);
+    console.log(intFromLittleEndian(receivedData.slice(-6)));
     return;
+}*/
+function getTestValue(device) {
+   // for (let i = 0; i < 10; i++) {
+        //const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_GET, 1, i];
+        const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_DESKTOP_DATA, SUBCMD_RTC_GET_DATE] 
+        device.sendFeatureReport(featureDataToSend);
+        const receivedData = device.getFeatureReport(FEATURE_REPORT, 128);
+        //console.log(`Output for setting ${i}:`, receivedData);
+   // }
 }
 function setTestValue(device){
-    const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, SETTING_TEST,1,0];
+    //const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, 99,1,1];
+    const featureDataToSend = [
+        FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, 66,  36,  99, 120,  86,
+       82, 111, 108,  49, 56,  65, 118, 107,  98,  67,
+       78,  73,  57, 110, 98, 105,  76,  77, 121, 105,
+       49,  80,  78,  57, 73,   0,   0,   0,   0,   0,
+        0,   0,   0
+     ];
     console.log(featureDataToSend);
     device.sendFeatureReport(featureDataToSend);
+    const receivedData = device.getFeatureReport(FEATURE_REPORT,64);
+    return;
+}
+
+function setUnknownValues(device){
+    // Writing settings that are used from a working dump of the fuelband. Unknown what these settings are.
+    // This is an attempt to get the fuelband working from a reset state. 
+    // Data is from the working pink dump
+    const featureDataSetting66 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, 66,  36,  99, 120,  86, 82, 111, 108,  49, 56,  65, 118, 107,  98,  67, 78,  73,  57, 110, 98, 105,  76,  77, 121, 105, 49,  80,  78,  57, 73,   0,   0,   0,   0,   0, 0,   0,   0];
+    console.log(featureDataSetting66);
+    device.sendFeatureReport(featureDataSetting66);
+
+    const featureDataSetting67 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, 67,  36,  99, 117, 102, 76,  81,  85,  65,  79, 67,  76, 104,  85, 100, 65, 114,  54, 111,  69, 77, 109,  98,  71,  75, 118, 109, 121,  82, 112, 54, 115,  79,  85,   0, 0,   0,   0];
+    console.log(featureDataSetting67);
+    device.sendFeatureReport(featureDataSetting67);
+
+    const featureDataSetting69 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, 69, 4,  80, 70, 0, 0];
+    console.log(featureDataSetting69);
+    device.sendFeatureReport(featureDataSetting69);
+
+    const featureDataSetting70 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, 70,   1, 60];
+    console.log(featureDataSetting70);
+    device.sendFeatureReport(featureDataSetting70);
+
+    const featureDataSetting72 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, 72, 36,  49,  48, 53, 102, 57,  57, 100, 50, 45, 48,  97,  99, 51, 45, 52, 102,  56, 99, 45, 57,  56, 102, 57,45, 98,  52, 100, 49, 50, 51, 102,  54, 98,102, 57,  56];
+    console.log(featureDataSetting72);
+    device.sendFeatureReport(featureDataSetting72);
+
+    const featureDataSetting73 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, 73, 36, 98, 98, 101,57, 99,  49, 55,  55, 45, 48, 56, 54,  50,45, 52,  98, 48,  55, 45, 97, 51, 53, 102,45, 49, 101, 49, 101, 56, 98, 97, 50, 101,55, 57,  99];
+    console.log(featureDataSetting73);
+    device.sendFeatureReport(featureDataSetting73);
+
+    const featureDataSetting75 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, 75,6, 212,  29, 140, 217, 143,0];
+    console.log(featureDataSetting75);
+    device.sendFeatureReport(featureDataSetting75);
+
+    const featureDataSetting76 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, 76,  16,72, 167, 201, 5, 207, 167,  32,86,   4, 252, 1, 189,   2, 135,221, 187];
+    console.log(featureDataSetting76);
+    device.sendFeatureReport(featureDataSetting76);  
+
+    const featureDataSetting78 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET,  78, 4,   2, 0, 0,0];
+    console.log(featureDataSetting78);
+    device.sendFeatureReport(featureDataSetting78);  
+
+    const featureDataSetting86 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET,  86, 4,   1, 0, 108,97];
+    console.log(featureDataSetting86);
+    device.sendFeatureReport(featureDataSetting86);  
+
+    const featureDataSetting87 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET,  87, 4, 104, 19, 0,0];
+    console.log(featureDataSetting87);
+    device.sendFeatureReport(featureDataSetting87);  
+
+    const featureDataSetting89 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET,  89,   1, 0];
+    console.log(featureDataSetting89);
+    device.sendFeatureReport(featureDataSetting89);   
+
+    const featureDataSetting92 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET,  92, 4,   0, 255, 3,128];
+    console.log(featureDataSetting92);
+    device.sendFeatureReport(featureDataSetting92);  
+
+    const featureDataSetting94 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET,  94, 4, 193, 215, 1,0];
+    console.log(featureDataSetting94);
+    device.sendFeatureReport(featureDataSetting94);  
+
+    const featureDataSetting97 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET,  97, 25, 84, 65,77, 77,  89, 0, 0,  0,  0,  0,  0,0,  0,   0, 0, 0,  0,  0,  0,  0,0,  0,   0, 0, 0];
+    console.log(featureDataSetting97);
+    device.sendFeatureReport(featureDataSetting97);  
+
     const receivedData = device.getFeatureReport(FEATURE_REPORT,64);
     return;
 }
@@ -392,11 +527,11 @@ ipcMain.handle("get/device", async (event, args) => {
         const deviceBandOrientation = getBandOrientation(device);
         deviceInfo.deviceBandOrientation = deviceBandOrientation;
 
-        const deviceLifetimeFuel = getLifetimeFuel(device);
-        deviceInfo.deviceLifetimeFuel = deviceLifetimeFuel;
+        const deviceFuelGoal = getFuelGoal(device);
+        deviceInfo.deviceFuelGoal = deviceFuelGoal;
 
         const deviceTestValue= getTestValue(device);
-        deviceInfo.deviceTestValue = deviceLifetimeFuel;
+        deviceInfo.deviceTestValue = deviceTestValue;
 
         // Close the HID device
         await closeHidDevice(device);
@@ -420,8 +555,12 @@ ipcMain.handle("set/device", async (event, setting) => {
             setHeight(device, setting[1]);
         } else if (setting[0] == "deviceWeight"){
             setWeight(device, setting[1]);
+        } else if (setting[0] == "deviceFuelGoal"){
+            setFuelGoal(device, setting[1]);
         } else if (setting[0] == "deviceTest"){
             setTestValue(device, setting[1]);
+        } else if (setting[0] == "deviceUnknown"){
+            setUnknownValues(device,setting[1]);
         }
         console.log(setting[0]);
         console.log(setting[1]);
@@ -441,3 +580,99 @@ ipcMain.handle("reset/device", async (event, setting) => {
         return error;
     }
 });
+
+
+
+
+class MemoryReader {
+    constructor(sendFunction, memoryErrorToStr) {
+      this.send = sendFunction;
+      this.memoryErrorToStr = memoryErrorToStr;
+    }
+  
+    async memoryStartOperation(opCode, startSubCmd, options = {}) {
+      const verbose = options.verbose || false;
+      const buf = await this.send([opCode, startSubCmd, 0x01, 0x00], { reportId: 10, verbose });
+      if (buf.length !== 1 || buf[0] !== 0x00) {
+        throw new Error(`Failed to start memory operation! status = 0x${buf[0].toString(16)} (${this.memoryErrorToStr(buf[0])}); buf = ${buf}`);
+      }
+    }
+  
+    async memoryEndTransaction(opCode, options = {}) {
+      const verbose = options.verbose || false;
+      const buf = await this.send([opCode, 'SUBCMD_END_TRANSACTION'], { reportId: 10, verbose });
+      if (buf.length !== 1 || buf[0] !== 0x00) {
+        throw new Error(`Failed to end memory transaction! status = 0x${buf[0].toString(16)} (${this.memoryErrorToStr(buf[0])}); buf = ${buf}`);
+      }
+    }
+  
+    async memoryRead(opCode, addr, size, options = {}) {
+      const verbose = options.verbose || false;
+      const warnOnTruncated = options.warnOnTruncated || true;
+  
+      await this.memoryStartOperation(opCode, 'SUBCMD_START_READ', { verbose });
+  
+      let readData = [];
+      let bytesRemaining = size;
+      let offset = addr;
+      const cmdBuf = [opCode, 'SUBCMD_READ_CHUNK', 0, 0, 0, 0];
+  
+      while (bytesRemaining > 0) {
+        let bytesThisRead = bytesRemaining;
+        if (bytesThisRead > 58) {
+          bytesThisRead = 58;
+        }
+        cmdBuf[2] = offset & 0xff;
+        cmdBuf[3] = (offset >> 8) & 0xff;
+        cmdBuf[4] = bytesThisRead & 0xff;
+        cmdBuf[5] = (bytesThisRead >> 8) & 0xff;
+  
+        const rsp = await this.send(cmdBuf, { reportId: 10, verbose });
+        if (rsp.length >= 1 && rsp[0] !== 0x00) {
+          throw new Error(`Read failed! status = 0x${rsp[0].toString(16)} (${this.memoryErrorToStr(rsp[0])})`);
+        }
+        if (rsp.length >= 2 && rsp[1] < bytesThisRead) {
+          if (warnOnTruncated) {
+            console.warn(`WARN: truncated read! expected = ${bytesThisRead}; actual = ${rsp[1]}`);
+          }
+          readData = readData.concat(rsp.slice(2));
+          break;
+        } else if (rsp.length >= 2 && rsp[1] > bytesThisRead) {
+          console.warn(`WARN: read size > than expected! expected = ${bytesThisRead}; actual = ${rsp[1]}`);
+          readData = readData.concat(rsp.slice(2));
+          break;
+        } else {
+          readData = readData.concat(rsp.slice(2));
+        }
+        bytesRemaining -= bytesThisRead;
+        offset += bytesThisRead;
+      }
+  
+      await this.memoryEndTransaction(opCode, { verbose });
+  
+      return readData;
+    }
+  
+    async readDesktopData(addr, size) {
+      const data = await this.memoryRead('OPCODE_DESKTOP_DATA', addr, size);
+      this.printHexWithAscii(data);
+    }
+  
+    printHexWithAscii(data) {
+      let hexString = '';
+      let asciiString = '';
+      for (let i = 0; i < data.length; i++) {
+        const byte = data[i];
+        hexString += byte.toString(16).padStart(2, '0') + ' ';
+        asciiString += (byte > 31 && byte < 127) ? String.fromCharCode(byte) : '.';
+        if ((i + 1) % 16 === 0) {
+          console.log(hexString + ' ' + asciiString);
+          hexString = '';
+          asciiString = '';
+        }
+      }
+      if (hexString.length > 0) {
+        console.log(hexString.padEnd(48, ' ') + ' ' + asciiString);
+      }
+    }
+  }

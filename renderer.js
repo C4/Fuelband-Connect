@@ -35,13 +35,17 @@ const setWeightButton = document.getElementById('setWeight');
 //Gender
 const genderInput = document.getElementById('gender');
 const setGenderButton = document.getElementById('setGender');
+//Fuel Goal
+const fuelGoalInput = document.getElementById('fuelGoal');
+const setFuelGoalButton = document.getElementById('setFuelGoal');
 
-const lifetimeFuelInput = document.getElementById('lifetimeFuel');
 const bandOrientationInput = document.getElementById('bandOrientation');
 const setBandOrientationButton = document.getElementById('setBandOrientation');
 
 const testInput = document.getElementById('testValue');
 const setTestValueButton = document.getElementById('setTestValue');
+
+const setUnknownValuesButton = document.getElementById('setUnknownValues');
 
 // Define the click event handler function
 function handleClick() {
@@ -52,7 +56,7 @@ function handleClick() {
         firstNameInput.value = device.deviceFirstName;
         heightInput.value = device.deviceHieght;
         weightInput.value = device.deviceWeight;
-        lifetimeFuelInput.value = device.deviceLifetimeFuel;
+        fuelGoalInput.value = device.deviceFuelGoal;
 
         // Set band orientation dropdown
         // Clear any existing options
@@ -131,11 +135,23 @@ setWeightButton.addEventListener('click', () => {
     console.log("Selected value:", selectedValue); // Do something with the selected value
     set_device(["deviceWeight",selectedValue]);
 });
+setFuelGoalButton.addEventListener('click', () => {
+    const selectedValue = fuelGoalInput.value;
+    console.log("Selected value:", selectedValue); // Do something with the selected value
+    set_device(["deviceFuelGoal",selectedValue]);
+});
 
+
+//Testing remove later
 setTestValueButton.addEventListener('click', () => {
     const selectedValue = testInput.value;
     console.log("Selected value:", selectedValue); // Do something with the selected value
     set_device(["deviceTest",selectedValue]);
+});
+
+setUnknownValuesButton.addEventListener('click', () => {
+    console.log("Sending unknown values");
+    set_device(["deviceUnknown"],"1");
 });
 
 // Add event listener to reset button

@@ -18,12 +18,17 @@
             </div>
         </div>
         <div class="row g-3">
-            <div class="col-6">
+            <div class="col-4">
                 <div class="input-group mb-3">
                     <button type="button" class="btn btn-primary" id="connectBtn">Read Fuelband</button>
                 </div>
             </div>
-            <div class="col-6">
+            <div class="col-4">
+                <div class="input-group mb-3">
+                    <button type="button" class="btn btn-success" id="setUnknownValues">Set Unknown Values</button>
+                </div>
+            </div>
+            <div class="col-4">
                 <div class="input-group mb-3">
                     <button type="button" class="btn btn-danger" id="resetDeviceBtn" data-bs-toggle="modal" data-bs-target="#confirmResetModal">Factory Reset Fuelband</button>
                 </div>
@@ -78,8 +83,9 @@
             <button class="btn btn-outline-secondary" type="button" id="setGender">Set Value</button>
         </div>
         <div class="input-group mb-3">
-            <span class="input-group-text" id="">Lifetime Fuel</span>
-            <input type="text" class="form-control" placeholder="Lifetime Fuel" id="lifetimeFuel" aria-label="lifetimeFuel" aria-describedby="basic-addon1">
+            <span class="input-group-text" id="">Fuel Goal</span>
+            <input type="text" class="form-control" placeholder="Daily Fuel Goal" id="fuelGoal" aria-label="fuelGoal" aria-describedby="basic-addon1">
+            <button class="btn btn-outline-secondary" type="button" id="setFuelGoal">Set Value</button>
         </div>
       </div>
 
