@@ -2,7 +2,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('node:path')
 const HID = require('node-hid')
-
+const fs = require('fs');
 const FEATURE_REPORT = 1
 
 const OPCODE_VERSION = 5;
@@ -53,6 +53,10 @@ const SETTING_HEIGHT = 62;
 const SETTING_DATE_OF_BIRTH = 63;
 const SETTING_GENDER = 64;
 const SETTING_HANDEDNESS = 65; // orientation
+const ACCESS_TOKEN = 66;
+const REFRESH_TOKEN = 67;
+const DISCOVERY_TOKEN = 75;
+const BLE_AUTHENTICATION_KEY = 76;
 const SETTING_MENU_STARS = 89; // hours won
 const SETTING_LIFETIME_FUEL = 94;
 const SETTING_FIRST_NAME = 97;
@@ -62,12 +66,12 @@ const SETTING_TEST = 0;
 function createWindow () {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1000,
+    height: 800,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     },
-    resizable: false
+    resizable: true
   })
 
   // and load the index.html of the app.
@@ -101,8 +105,8 @@ app.on('window-all-closed', function () {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
-const VENDOR_ID = 0x11AC;
-const PRODUCT_ID = 0x317D;
+const VENDOR_ID = 0x11AC; //Nike
+const PRODUCT_ID = 0x317D; //Fuelband SE
 
 // Define report IDs
 const REPORT_ID = 0x01;
@@ -118,6 +122,7 @@ async function openHidDevice() {
             }
             const device = new HID.HID(deviceInfo.path);
             //const product = deviceInfo.product;
+
             resolve(device);
         } catch (error) {
             reject(error);
@@ -227,16 +232,11 @@ const deviceInfo = {
 
 //These are the get functions for interfacing with the Fuelband
 function getModelNumber(device){
-    //const featureDataToSend = [FEATURE_REPORT, 0x02, 0xFF, OPCODE_VERSION];
+    const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_VERSION,0];
 
-    //Replicating from the pcap
-    const featureDataToSend = [0x09, 0x09, 0x02, 0x00];
-    console.log("Model num request:",featureDataToSend);
-    console.log("Model num request (hex):",decimalsToHex(featureDataToSend));
-    device.sendFeatureReport(featureDataToSend);
+    device.write(featureDataToSend);
     const receivedData = device.getFeatureReport(FEATURE_REPORT,64);
-    console.log("Model num response:",receivedData);
-    console.log("Model num response (hex):",decimalsToHex(receivedData));
+    console.log(receivedData);
     return toAscii(receivedData.slice(18));
 }
 
@@ -244,7 +244,6 @@ function getSerialNumber(device){
     const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_GET, 1,SETTING_SERIAL_NUMBER];
     device.sendFeatureReport(featureDataToSend);
     const receivedData = device.getFeatureReport(FEATURE_REPORT,64);
-    console.log("serial num response:",receivedData);
     return toAscii(receivedData.slice(7));
 }
 
@@ -377,6 +376,52 @@ function doFactoryReset(device){
     device.sendFeatureReport(featureDataToSend);
     return;
 }
+function doInitSE(device){
+    const packets = parseHexData(filePath);
+    console.log(`Got to init device function`);
+    for (const packet of packets) {
+        console.log(packet);
+        device.write(packet);
+        console.log("packet sent");
+    }
+    return;
+}
+function doInitOG(device){
+    console.log(`Got to init OG device function`);
+    return;
+}
+const filePath = 'init/reset-fullworking.txt'; // Replace with your file path
+
+function sendPackets(packets,device) {
+    for (const packet of packets) {
+
+        device.write(packet);
+        console.log("packet sent");
+    }
+}
+function parseHexData(filePath) {
+    const data = fs.readFileSync(filePath, 'utf8');
+    const lines = data.split('\n');
+    const packets = [];
+    let currentPacket = [];
+
+    for (const line of lines) {
+        const hexString = line.slice(6, 53).replace(/\s+/g, ''); // Extract the hex part
+        if (hexString.length > 0) {
+            const bytes = hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16));
+            currentPacket = currentPacket.concat(bytes);
+        } else if (currentPacket.length > 0) {
+            packets.push(currentPacket);
+            currentPacket = [];
+        }
+    }
+
+    if (currentPacket.length > 0) {
+        packets.push(currentPacket);
+    }
+
+    return packets;
+}
 
 function getFuelGoal(device){
     const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_GET, 1,SETTING_GOAL_0];
@@ -412,26 +457,27 @@ function getTestValue(device){
     return;
 }*/
 function getTestValue(device) {
-   // for (let i = 0; i < 10; i++) {
-        //const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_GET, 1, i];
-        const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_DESKTOP_DATA, SUBCMD_RTC_GET_DATE] 
+    //for (let i = 0; i < 10; i++) {
+        const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_GET, 1, BLE_AUTHENTICATION_KEY];
+        //const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_DESKTOP_DATA, SUBCMD_RTC_GET_DATE] 
         device.sendFeatureReport(featureDataToSend);
         const receivedData = device.getFeatureReport(FEATURE_REPORT, 128);
-        //console.log(`Output for setting ${i}:`, receivedData);
-   // }
+        console.log(`Output for setting ACCESS_TOKEN`, receivedData);
+    //}
 }
 function setTestValue(device){
-    //const featureDataToSend = [FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, 99,1,1];
+    // This is testing setting the 4 new values pointed out by Dan
     const featureDataToSend = [
-        FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, 66,  36,  99, 120,  86,
-       82, 111, 108,  49, 56,  65, 118, 107,  98,  67,
-       78,  73,  57, 110, 98, 105,  76,  77, 121, 105,
-       49,  80,  78,  57, 73,   0,   0,   0,   0,   0,
-        0,   0,   0
+        FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, ACCESS_TOKEN, 35,
+        97, 99, 99, 101, 115, 115, 116, 111, 107, 101, 110, 0, 0, 0, 0, 0, 
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+        0, 0, 0
      ];
     console.log(featureDataToSend);
     device.sendFeatureReport(featureDataToSend);
     const receivedData = device.getFeatureReport(FEATURE_REPORT,64);
+
+
     return;
 }
 
@@ -439,7 +485,38 @@ function setUnknownValues(device){
     // Writing settings that are used from a working dump of the fuelband. Unknown what these settings are.
     // This is an attempt to get the fuelband working from a reset state. 
     // Data is from the working pink dump
-    const featureDataSetting66 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, 66,  36,  99, 120,  86, 82, 111, 108,  49, 56,  65, 118, 107,  98,  67, 78,  73,  57, 110, 98, 105,  76,  77, 121, 105, 49,  80,  78,  57, 73,   0,   0,   0,   0,   0, 0,   0,   0];
+    const featureDataToSend1 = [
+        FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, ACCESS_TOKEN, 35,
+        97, 99, 99, 101, 115, 115, 116, 111, 107, 101, 110, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+     ];
+     console.log(featureDataToSend1);
+     device.sendFeatureReport(featureDataToSend1);
+
+
+
+     const featureDataToSend2 = [
+        FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, REFRESH_TOKEN, 35,
+        114, 101, 102, 114, 101, 115, 104, 116, 111, 107, 101, 110, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+     ];
+     console.log(featureDataToSend2);
+     device.sendFeatureReport(featureDataToSend2);
+
+     const featureDataToSend3 = [
+        FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, DISCOVERY_TOKEN, 6,
+        212, 29, 140, 217, 143, 0
+     ];
+     console.log(featureDataToSend3);
+     device.sendFeatureReport(featureDataToSend3);
+
+     const featureDataToSend4= [
+        FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, BLE_AUTHENTICATION_KEY, 16,
+        66, 106, 115, 251, 121, 209, 242, 241, 246, 3, 189, 190, 238, 247, 49, 165
+     ];
+     console.log(featureDataToSend4);
+     device.sendFeatureReport(featureDataToSend4);
+
+
+ /*   const featureDataSetting66 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET, 66,  36,  99, 120,  86, 82, 111, 108,  49, 56,  65, 118, 107,  98,  67, 78,  73,  57, 110, 98, 105,  76,  77, 121, 105, 49,  80,  78,  57, 73,   0,   0,   0,   0,   0, 0,   0,   0];
     console.log(featureDataSetting66);
     device.sendFeatureReport(featureDataSetting66);
 
@@ -498,7 +575,7 @@ function setUnknownValues(device){
     const featureDataSetting97 = [ FEATURE_REPORT, 0x04, 0xFF, OPCODE_SETTING_SET,  97, 25, 84, 65,77, 77,  89, 0, 0,  0,  0,  0,  0,0,  0,   0, 0, 0,  0,  0,  0,  0,0,  0,   0, 0, 0];
     console.log(featureDataSetting97);
     device.sendFeatureReport(featureDataSetting97);  
-
+*/
     const receivedData = device.getFeatureReport(FEATURE_REPORT,64);
     return;
 }
@@ -581,6 +658,19 @@ ipcMain.handle("reset/device", async (event, setting) => {
     }
 });
 
+ipcMain.handle("init/device", async (event, model) => {
+    try {
+        device = await openHidDevice();
+        if (model[0] == "SE"){
+            doInitSE(device);
+        } else if (model[0] == "OG"){
+            doInitOG(device);
+        }
+    } catch (error) {
+        console.error('Error communicating with HID device:', error);
+        return error;
+    }
+});
 
 
 

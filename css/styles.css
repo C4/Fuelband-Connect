@@ -13,13 +13,15 @@ body {
   overflow: hidden;
 
   /* Prevent white flash when running application */
-  background-color: #ffffff;
+  background-color: #1e1e1e;
+
+  justify-content: center;
 
   /* Prevent WebView bounce effect in OS X */
   height: 100%;
   width: 100%;
   color: #272727;
-  font-size: 10px;
+  font-size: 13px;
   font-family: 'Poppins', sans-serif;
 }
 
@@ -34,3 +36,102 @@ body {
   z-index: 1050; 
 }
 */
+
+.sidenav {
+  height: 100%;
+  width: 160px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: #2d2d30;
+  overflow-x: hidden;
+  padding-top: 20px;
+}
+
+.sidenav a {
+  padding: 10px 15px;
+  text-decoration: none;
+  font-size: 16px;
+  color: #818181;
+  display: block;
+  transition: all 0.3s ease;
+}
+
+.sidenav a i {
+  margin-right: 10px;
+}
+
+.sidenav a:hover {
+  color: #f1f1f1;
+}
+
+.sidenav a.active {
+  color: #ffffff;
+  background-color: #252526;
+}
+
+.main {
+  margin-left: 160px; /* Same width as the sidebar */
+  padding: 20px;
+}
+
+@media screen and (max-height: 450px) {
+  .sidenav {padding-top: 15px;}
+  .sidenav a {font-size: 16px;}
+}
+
+
+.rounded-container {
+  width: 100%;
+  padding: 30px;
+  background-color: #2d2d30;
+  border-radius: 10px; /* Adjust the value for more or less rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: Adds a shadow effect */
+  margin: 20px auto; /* Centers the container horizontally */
+}
+
+.rounded-container h2 {
+  color: #c3c3c3;
+}
+
+.rounded-container p {
+  color: #d8d8d8;
+}
+
+
+.tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  background-color: #1e1e1e;
+}
+
+.icon {
+  margin-right: 10px;
+}
+
+.icon img {
+  height: 45px;
+}
+
+.text {
+  font-size: 45px;
+  font-weight: bold;
+  color: #ebebeb;
+}
+
+.input-box {
+  width: 300px;
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  background-color: #444444; /* Darker background for input box */
+  color: #ffffff; /* Light text color */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: Adds a subtle shadow */
+}
+
+.input-box::placeholder {
+  color: #aaaaaa; /* Placeholder text color */
+}

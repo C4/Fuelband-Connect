@@ -11,6 +11,7 @@ const { ipcRenderer, contextBridge, ipcMain } = require("electron");
 const WINDOW_API = {
     GetDevice: () => ipcRenderer.invoke("get/device"),
     SetDevice: (setting) => ipcRenderer.invoke("set/device", setting),
-    ResetDevice: () => ipcRenderer.invoke("reset/device")
+    ResetDevice: () => ipcRenderer.invoke("reset/device"),
+    InitDevice: (model) => ipcRenderer.invoke("init/device", model)
 }
 contextBridge.exposeInMainWorld("api", WINDOW_API);

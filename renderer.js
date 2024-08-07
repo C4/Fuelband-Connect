@@ -141,14 +141,6 @@ setFuelGoalButton.addEventListener('click', () => {
     set_device(["deviceFuelGoal",selectedValue]);
 });
 
-
-//Testing remove later
-setTestValueButton.addEventListener('click', () => {
-    const selectedValue = testInput.value;
-    console.log("Selected value:", selectedValue); // Do something with the selected value
-    set_device(["deviceTest",selectedValue]);
-});
-
 setUnknownValuesButton.addEventListener('click', () => {
     console.log("Sending unknown values");
     set_device(["deviceUnknown"],"1");
